@@ -1,0 +1,8 @@
+services:
+  hyperkernel:
+    build: .
+    command: make qemu
+    ports:
+      - 8080:10080
+    volumes:
+      - ./hyperkernel:/src
