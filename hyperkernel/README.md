@@ -28,13 +28,13 @@
 
 4.  在 Docker 中:
 
-    -   构建 xv6
+    -   构建 hv6
 
         ```bash
         make
         ```
 
-    -   在 QEMU 中运行 xv6
+    -   在 QEMU 中运行 hv6
 
         ```bash
         make qemu
