@@ -45,6 +45,6 @@
     -   运行形式化验证和测试
 
         ```bash
-        make verify
+        make verify -- -v
         make irpy/test
         ```
