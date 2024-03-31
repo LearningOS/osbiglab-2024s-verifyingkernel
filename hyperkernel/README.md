@@ -48,3 +48,9 @@
         make verify -- -v
         make irpy/test
         ```
+
+    -   并行运行形式化验证
+
+        ```
+        make hv6-verify-par
+        ```

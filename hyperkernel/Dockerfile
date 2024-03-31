@@ -17,6 +17,8 @@ RUN mv bin/libz3.so /usr/lib
 RUN mv bin/python/z3 /usr/lib/python2.7/dist-packages
 RUN mkdir /usr/share/doc/z3 && mv LICENSE.txt /usr/share/doc/z3
 
+RUN apt-get install -y python-pytest-xdist
+
 RUN git config --global --add safe.directory /src
 
 WORKDIR /src
