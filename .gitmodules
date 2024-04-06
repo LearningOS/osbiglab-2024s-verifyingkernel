@@ -1,0 +1,9 @@
+[submodule "verus/verus"]
+	path = verus/verus
+	url = https://github.com/verus-lang/verus
+[submodule "verus/verus-analyzer"]
+	path = verus/verus-analyzer
+	url = https://github.com/verus-lang/verus-analyzer
+[submodule "verus/verusfmt"]
+	path = verus/verusfmt
+	url = https://github.com/verus-lang/verusfmt

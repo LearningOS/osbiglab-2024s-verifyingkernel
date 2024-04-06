@@ -1,0 +1,8 @@
+#!/bin/bash
+
+tmp=$(mktemp --tmpdir verusfmt.XXX.rs)
+cat > "$tmp"
+verusfmt --verus-only "$tmp"
+"$(rustup which rustfmt)" "$tmp"
+cat "$tmp"
+rm "$tmp"
