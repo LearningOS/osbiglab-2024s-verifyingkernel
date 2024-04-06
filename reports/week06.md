@@ -644,4 +644,16 @@
     
     </details>
 
+2.  学习了 [Verus Tutorial](https://verus-lang.github.io/verus/guide) 的现有部分。只不过教程目前不太完整，还需要阅读示例代码以及 Verus 源码，多动手尝试。
+
+3.  配置了 verus、verus-analyzer、verusfmt 的运行环境（编辑器配置）。
+
+4.  编写了 [经过验证的 Fibonacci 数列计算](../verus-exercises/src/fib.rs) 作为练习。
+
+5.  尝试实现并验证 map（get / set / remove），暂未成功。
+
 ### 下周计划
+
+1.  实现 map（或者给 `BTreeMap` 编写 axiom，Verus 标准库就是给 `Vec` 直接写的 axiom 没有证明）作为练习以及后续 OS 相关 syscall 的基础。
+2.  搭建 kernel 的基本框架。
+3.  尝试使用 verus-mimalloc 作为 global allocator。
