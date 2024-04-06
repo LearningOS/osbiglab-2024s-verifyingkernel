@@ -1,0 +1,3 @@
+mod fib;
+
+fn main() {}
