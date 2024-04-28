@@ -49,7 +49,9 @@ pub trait ByteAllocator: BaseAllocator {
 
 所以光是最高层的 spec 就改了几版。
 
-另外，verus-mimalloc 代码很长，没有文档、注释，阅读非常困难，看接口也没找到是否支持添加内存区域，而且如果要接入 ArceOS 应该还是需要把验证代码手动去掉，有一定工作量。
+另外，verus-mimalloc 代码很长，<del>没有文档、注释</del>，阅读非常困难，看接口也没找到是否支持添加内存区域，而且如果要接入 ArceOS 应该还是需要把验证代码手动去掉，有一定工作量。
+
+后来发现了有 [verus-mimalloc/README.md](https://github.com/verus-lang/verified-memory-allocator/blob/main/verus-mimalloc/README.md)，之前没发现确实不应该，主要是我之前在考虑尽量自己写一个，没太花时间考虑如何接入 verus-mimalloc。只不过这个文档主要在描述 mimalloc 的实现，对证明组织结构的描述还是较少。
 
 也看了一下 page table，ArceOS 是在 `page_table` crate 中实现了一个架构无关的通用 page table，然后将硬件部分拆分到 `page_table_entry` 和 `axhal` 实现，在 `page_table_entry` 中为各个架构的 PTE 实现通用接口供 `page_table` 使用，在 `axhal` 中实际对硬件进行操作。这个架构和 verified paging for x86_64 不同，后者是页表直接操作内存，各个 state machine 之间也是由内存内容连接在一起进行证明，如果要搬过来用可能也需要进行较大的改动。
 
