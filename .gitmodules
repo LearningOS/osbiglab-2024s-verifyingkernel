@@ -7,3 +7,6 @@
 [submodule "verus/verusfmt"]
 	path = verus/verusfmt
 	url = https://github.com/verus-lang/verusfmt
+[submodule "arceos-modules/arceos"]
+	path = arceos-modules/arceos
+	url = https://github.com/ouuan/arceos
