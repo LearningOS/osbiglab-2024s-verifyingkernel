@@ -146,7 +146,6 @@ impl BitmapAllocator {
                 p = next;
             }
             let tracked block = self.block_map.borrow_mut().tracked_remove(p);
-            let ghost old_block = block;
             BitmapBlock::set_next(p, Tracked(&mut block), start);
             proof {
                 self.block_map.borrow_mut().tracked_insert(p, block);
