@@ -9,10 +9,9 @@ pub mod extra;
 
 use vstd::prelude::verus;
 
-verus!{
+verus! {
 
 global size_of usize == 8;
 
-}
-
+} // verus!
 fn main() {}
