@@ -1,12 +1,7 @@
-#![verus::trusted]
+// #![verus::trusted]
 // trusted:
 // this is the process-level specification of the kernel's behaviour
-
-use crate::definitions_t::{
-    aligned, between, candidate_mapping_in_bounds, candidate_mapping_overlaps_existing_pmem,
-    candidate_mapping_overlaps_existing_vmem, PageTableEntry, RWOp, L1_ENTRY_SIZE, L2_ENTRY_SIZE,
-    L3_ENTRY_SIZE, MAX_PHYADDR, PT_BOUND_HIGH, PT_BOUND_LOW, WORD_SIZE,
-};
+use crate::definitions_t::*;
 use crate::spec_t::mem;
 use vstd::prelude::*;
 

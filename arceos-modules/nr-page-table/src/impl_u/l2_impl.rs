@@ -1,23 +1,13 @@
+use crate::definitions_t::*;
+use crate::definitions_u::*;
+use crate::extra::{self, *};
+use crate::impl_u::indexing;
+use crate::impl_u::l0::*;
+use crate::impl_u::l1;
+use crate::spec_t::hardware::*;
+use crate::spec_t::mem;
 use vstd::assert_by_contradiction;
 use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, axiom_max_phyaddr_width_facts, between, bit, bitmask_inc, new_seq, x86_arch_exec,
-    x86_arch_spec, Flags, MemRegion, MemRegionExec, PageTableEntry, PageTableEntryExec,
-    L1_ENTRY_SIZE, L2_ENTRY_SIZE, L3_ENTRY_SIZE, MAX_BASE, MAX_PHYADDR, MAX_PHYADDR_WIDTH,
-    PAGE_SIZE, WORD_SIZE, X86_NUM_ENTRIES, X86_NUM_LAYERS,
-};
-use crate::definitions_u::{aligned_exec, lemma_new_seq, permissive_flags};
-use crate::extra::{self, result_map_ok};
-use crate::impl_u::indexing;
-use crate::impl_u::l0::ambient_arith;
-use crate::impl_u::l1;
-use crate::spec_t::hardware::{
-    GhostPageDirectoryEntry, PageDirectoryEntry, MASK_ADDR, MASK_DIR_ADDR, MASK_FLAG_P,
-    MASK_FLAG_PCD, MASK_FLAG_PWT, MASK_FLAG_RW, MASK_FLAG_US, MASK_FLAG_XD, MASK_L1_PG_ADDR,
-    MASK_L1_PG_FLAG_PS, MASK_L2_PG_ADDR, MASK_L3_PG_ADDR, MASK_PG_FLAG_PAT,
-};
-use crate::spec_t::mem;
 
 verus! {
 
@@ -770,6 +760,7 @@ pub struct PTDir {
 // (To use a struct we'd have to keep a &mut reference to the memory in the struct, which Verus
 // doesn't support. Or we keep an owned copy but then can't have an external interface that mutably
 // borrows a memory.)
+#[allow(non_snake_case)]
 pub mod PT {
     use super::*;
 

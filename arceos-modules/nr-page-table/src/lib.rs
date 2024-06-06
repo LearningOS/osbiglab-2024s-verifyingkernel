@@ -1,4 +1,8 @@
-#![feature(nonnull_slice_from_raw_parts)]
+#![no_std]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+
 extern crate alloc;
 
 pub mod impl_u;
@@ -7,11 +11,8 @@ pub mod definitions_u;
 pub mod spec_t;
 pub mod extra;
 
-use vstd::prelude::verus;
+vstd::prelude::verus! {
 
-verus! {
-
-global size_of usize == 8;
+global layout usize is size == 8, align == 8;
 
 } // verus!
-fn main() {}

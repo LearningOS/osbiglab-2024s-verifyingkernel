@@ -1,18 +1,13 @@
-#![verus::trusted]
+// #![verus::trusted]
 // trusted:
 // describes how the whole system behaves
 //
 // this refers to definitions in an untrusted file, but uses them in a way that the
 // state-machine refinement can check
-
-use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, between, overlap, MemRegion, PageTableEntry, L1_ENTRY_SIZE, L2_ENTRY_SIZE,
-    L3_ENTRY_SIZE, WORD_SIZE,
-};
+use crate::definitions_t::*;
 use crate::impl_u::spec_pt;
 use crate::spec_t::{hardware, hlspec, mem};
+use vstd::prelude::*;
 
 verus! {
 

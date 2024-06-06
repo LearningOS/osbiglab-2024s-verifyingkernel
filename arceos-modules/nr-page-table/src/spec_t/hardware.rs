@@ -1,14 +1,11 @@
-#![verus::trusted]
+// #![verus::trusted]
+
 // trusted:
 // this defines the page table structure as interpreted by the hardware
 // and the hardware state machine
 
-use crate::definitions_t::{
-    aligned, axiom_max_phyaddr_width_facts, between, bit, bitmask_inc, Flags, MemRegion,
-    PageTableEntry, RWOp, L1_ENTRY_SIZE, L2_ENTRY_SIZE, L3_ENTRY_SIZE, MAX_BASE, MAX_PHYADDR_WIDTH,
-    PAGE_SIZE,
-};
-use crate::spec_t::mem::{self, word_index_spec};
+use crate::definitions_t::*;
+use crate::spec_t::mem::{self, *};
 use vstd::prelude::*;
 
 verus! {
@@ -31,6 +28,7 @@ pub enum HWStep {
 // FIXME: Including is_variant conditionally to avoid the warning when not building impl. But this
 // should disappear completely when I find the time to migrate to the new syntax.
 #[cfg_attr(feature = "impl", is_variant)]
+#[allow(non_snake_case)]
 pub ghost enum GhostPageDirectoryEntry {
     Directory {
         addr: usize,
@@ -132,7 +130,7 @@ pub exec const MASK_ADDR: u64
     ensures
         MASK_ADDR == MASK_ADDR_SPEC,
 {
-    axiom_max_phyaddr_width_facts();
+    proof { axiom_max_phyaddr_width_facts() }
     bitmask_inc!(12u64, MAX_PHYADDR_WIDTH - 1)
 }
 
@@ -143,7 +141,7 @@ pub exec const MASK_L1_PG_ADDR: u64
     ensures
         MASK_L1_PG_ADDR == MASK_L1_PG_ADDR_SPEC,
 {
-    axiom_max_phyaddr_width_facts();
+    proof { axiom_max_phyaddr_width_facts() }
     bitmask_inc!(30u64, MAX_PHYADDR_WIDTH - 1)
 }
 
@@ -154,7 +152,7 @@ pub exec const MASK_L2_PG_ADDR: u64
     ensures
         MASK_L2_PG_ADDR == MASK_L2_PG_ADDR_SPEC,
 {
-    axiom_max_phyaddr_width_facts();
+    proof { axiom_max_phyaddr_width_facts() }
     bitmask_inc!(21u64, MAX_PHYADDR_WIDTH - 1)
 }
 
@@ -165,7 +163,7 @@ pub exec const MASK_L3_PG_ADDR: u64
     ensures
         MASK_L3_PG_ADDR == MASK_L3_PG_ADDR_SPEC,
 {
-    axiom_max_phyaddr_width_facts();
+    proof { axiom_max_phyaddr_width_facts() }
     bitmask_inc!(12u64, MAX_PHYADDR_WIDTH - 1)
 }
 

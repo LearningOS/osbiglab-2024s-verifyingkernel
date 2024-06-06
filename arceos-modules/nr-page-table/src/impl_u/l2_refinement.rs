@@ -1,21 +1,12 @@
-use vstd::assert_by_contradiction;
-use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, axiom_x86_arch_exec_spec, bitmask_inc, new_seq, x86_arch_spec, Flags, L0_ENTRY_SIZE,
-    L1_ENTRY_SIZE, L2_ENTRY_SIZE, L3_ENTRY_SIZE, MAX_BASE,
-};
-use crate::definitions_t::{MemRegion, PageTableEntry, PageTableEntryExec};
-use crate::spec_t::hardware::{
-    interp_pt_mem, l0_bits, l1_bits, l2_bits, l3_bits, nat_to_u64, read_entry, valid_pt_walk,
-    GhostPageDirectoryEntry,
-};
-use crate::spec_t::impl_spec;
-use crate::spec_t::mem;
-
-use crate::definitions_u::{lemma_new_seq, x86_arch_inv};
+use crate::definitions_t::*;
+use crate::definitions_u::*;
 use crate::impl_u::l1;
 use crate::impl_u::l2_impl::{PTDir, PT};
+use crate::spec_t::hardware::*;
+use crate::spec_t::impl_spec;
+use crate::spec_t::mem;
+use vstd::assert_by_contradiction;
+use vstd::prelude::*;
 
 verus! {
 

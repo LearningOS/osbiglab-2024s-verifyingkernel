@@ -1,4 +1,4 @@
-use crate::definitions_t::aligned;
+use crate::definitions_t::*;
 use vstd::map::*;
 use vstd::prelude::*;
 
@@ -25,11 +25,10 @@ pub proof fn mod_mult_zero_implies_mod_zero(a: nat, b: nat, c: nat)
     ensures
         aligned(a, b),
 {
+    #[verusfmt::skip]
     broadcast use
         vstd::arithmetic::div_mod::lemma_mod_mod,
-        vstd::arithmetic::div_mod::lemma_mod_breakdown,
-    ;
-
+        vstd::arithmetic::div_mod::lemma_mod_breakdown;
     assert((a % (b * c)) % b == 0);
 }
 

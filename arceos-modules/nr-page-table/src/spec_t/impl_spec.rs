@@ -1,8 +1,8 @@
-#![verus::trusted]
+// #![verus::trusted]
 // trusted:
 // these are the interface specifications, they are part of the theorem
 use crate::definitions_t::PageTableEntryExec;
-use crate::extra::result_map_ok;
+use crate::extra::*;
 use crate::impl_u::spec_pt;
 use crate::spec_t::mem;
 use vstd::prelude::*;

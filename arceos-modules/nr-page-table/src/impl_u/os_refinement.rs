@@ -1,15 +1,10 @@
-use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, between, candidate_mapping_overlaps_existing_pmem,
-    candidate_mapping_overlaps_existing_vmem, overlap, MemRegion, PageTableEntry, RWOp,
-    L1_ENTRY_SIZE, L2_ENTRY_SIZE, L3_ENTRY_SIZE, WORD_SIZE,
-};
+use crate::definitions_t::*;
 use crate::extra;
 use crate::impl_u::spec_pt;
-use crate::spec_t::mem::word_index_spec;
+use crate::spec_t::mem::*;
 use crate::spec_t::os::*;
-use crate::spec_t::{hardware, hlspec};
+use crate::spec_t::*;
+use vstd::prelude::*;
 
 verus! {
 

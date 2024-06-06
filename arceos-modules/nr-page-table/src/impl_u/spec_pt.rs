@@ -1,12 +1,7 @@
-use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, between, candidate_mapping_in_bounds, candidate_mapping_overlaps_existing_pmem,
-    candidate_mapping_overlaps_existing_vmem, PageTableEntry, L1_ENTRY_SIZE, L2_ENTRY_SIZE,
-    L3_ENTRY_SIZE, MAX_BASE, MAX_PHYADDR, PT_BOUND_HIGH, PT_BOUND_LOW,
-};
+use crate::definitions_t::*;
 use crate::spec_t::hardware;
 use crate::spec_t::mem;
+use vstd::prelude::*;
 
 // trusted: not trusted
 // the interface spec is written in such a way that it guarantees that the impl behaves according

@@ -1,8 +1,5 @@
+use crate::definitions_t::*;
 use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, axiom_max_phyaddr_width_facts, new_seq, ArchExec, ArchLayerExec, Flags, MAX_PHYADDR,
-};
 
 verus! {
 
@@ -72,16 +69,6 @@ pub proof fn overflow_bounds()
 // [n0   #  n1  , n2  , n3  , n4  ] // number_of_entries
 // [     #  512 , 512 , 512 , 512 ]
 // [     #  9   , 9   , 9   , 9   , 12  ]
-use crate::definitions_t::{
-    Arch,
-    ArchLayer,
-    MAX_BASE,
-    X86_MAX_ENTRY_SIZE,
-    X86_NUM_ENTRIES,
-    x86_arch_spec,
-    X86_NUM_LAYERS,
-};
-
 impl Clone for ArchLayerExec {
     fn clone(&self) -> Self {
         ArchLayerExec { entry_size: self.entry_size, num_entries: self.num_entries }

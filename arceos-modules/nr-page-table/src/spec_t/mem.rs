@@ -1,16 +1,13 @@
-#![verus::trusted]
+// #![verus::trusted]
+
 // trusted:
 // these are wrappers for the interface with the memory
 // `check_overflow` is a proof to harden the specification, it reduces the overall
 // trusted-ness of this file, but not in a quantifiable fashion; for this reason we deem
 // it appropriate to exclude it from P:C accounting
 
+use crate::definitions_t::*;
 use vstd::prelude::*;
-
-use crate::definitions_t::{
-    aligned, new_seq, overlap, MemRegion, MemRegionExec, PageTableEntry, MAX_PHYADDR, PAGE_SIZE,
-    WORD_SIZE,
-};
 
 verus! {
 
@@ -185,6 +182,7 @@ impl PageTableMemory {
     /// preconditions.
     /// (This is an exec function so it generates the normal overflow VCs.)
     #[verus::line_count::ignore]
+    #[allow(dead_code)]
     fn check_overflow(&self, pbase: usize, idx: usize, region: Ghost<MemRegion>)
         requires
             pbase <= MAX_PHYADDR,
@@ -233,11 +231,12 @@ impl PageTableMemory {
     pub spec fn phys_mem_ref_as_usize_spec(&self) -> usize;
 
     #[verifier(external_body)]
+    #[allow(dead_code)]
     fn phys_mem_ref_as_usize(&self) -> (res: usize)
         ensures
             res == self.phys_mem_ref_as_usize_spec(),
     {
-        unsafe { self.phys_mem_ref as usize }
+        self.phys_mem_ref as usize
     }
 }
 

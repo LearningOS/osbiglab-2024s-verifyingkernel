@@ -1,12 +1,9 @@
-use crate::definitions_t::new_seq;
-use crate::definitions_u::lemma_new_seq;
-use crate::extra::{self, result_map};
+use crate::definitions_t::*;
+use crate::definitions_u::*;
+use crate::extra::{self, *};
 use crate::impl_u::indexing;
+use crate::impl_u::l0::{self, *};
 use vstd::prelude::*;
-
-use crate::definitions_t::{aligned, between, overlap, Arch, Flags, MemRegion, PageTableEntry};
-use crate::definitions_u::permissive_flags;
-use crate::impl_u::l0::{self, ambient_lemmas1};
 
 verus! {
 

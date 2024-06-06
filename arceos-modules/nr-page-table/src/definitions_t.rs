@@ -1,9 +1,8 @@
-#![verus::trusted]
-
+// #![verus::trusted]
 // trusted: these are used in trusted definitions
 //
 // `overlap_sanity_check` hardens a spec, so we don't count it as trusted
-
+use alloc::vec::Vec;
 use vstd::prelude::*;
 
 verus! {
@@ -30,7 +29,7 @@ pub const X86_NUM_ENTRIES: usize = 512;
 
 // The maximum physical address width is between 32 and 52 bits.
 #[verifier(external_body)]
-pub const MAX_PHYADDR_WIDTH: u64 = unimplemented!();
+pub const MAX_PHYADDR_WIDTH: u64 = 52;
 
 #[verifier(external_body)]
 pub proof fn axiom_max_phyaddr_width_facts()
@@ -47,7 +46,7 @@ pub exec const MAX_PHYADDR: u64
     ensures
         MAX_PHYADDR == MAX_PHYADDR_SPEC,
 {
-    axiom_max_phyaddr_width_facts();
+    proof { axiom_max_phyaddr_width_facts() }
     assert(1u64 << 32 == 0x100000000) by (compute);
     assert(forall|m: u64, n: u64| n < m < 64 ==> 1u64 << n < 1u64 << m) by (bit_vector);
     (1u64 << MAX_PHYADDR_WIDTH) - 1u64
