@@ -1,12 +1,11 @@
 // #![verus::trusted]
-
 // trusted:
 // these are wrappers for the interface with the memory
 // `check_overflow` is a proof to harden the specification, it reduces the overall
 // trusted-ness of this file, but not in a quantifiable fashion; for this reason we deem
 // it appropriate to exclude it from P:C accounting
-
 use crate::definitions_t::*;
+use alloc::boxed::Box;
 use vstd::prelude::*;
 
 verus! {
@@ -33,21 +32,10 @@ pub open spec fn word_index_spec(addr: nat) -> nat
     addr / (WORD_SIZE as nat)
 }
 
-pub struct TLB {}
-
-impl TLB {
-    pub spec fn view(self) -> Map<nat, PageTableEntry>;
-
-    /// Invalidates any TLB entries containing `vbase`.
-    #[verifier(external_body)]
-    pub fn invalidate_entry(&mut self, vbase: usize)
-        ensures
-            forall|base, pte|
-                self.view().contains_pair(base, pte) ==> old(self).view().contains_pair(base, pte),
-            !self.view().dom().contains(vbase as nat),
-    {
-        unimplemented!()
-    }
+#[verifier(external_body)]
+pub struct PageAllocator {
+    pub alloc: Box<dyn Fn() -> usize>,
+    pub dealloc: Box<dyn Fn(usize)>,
 }
 
 // FIXME: We need to allow the dirty and accessed bits to change in the memory.
@@ -56,10 +44,17 @@ impl TLB {
 pub struct PageTableMemory {
     /// `phys_mem_ref` is the starting address of the physical memory linear mapping
     phys_mem_ref: *mut u64,
-    cr3: u64,
+    cr3: usize,
+    page_allocator: PageAllocator,
 }
 
 impl PageTableMemory {
+    #[verifier::external_body]
+    pub fn new(page_allocator: PageAllocator) -> Self {
+        let cr3 = (page_allocator.alloc)();
+        Self { phys_mem_ref: 0 as _, cr3, page_allocator }
+    }
+
     pub spec fn alloc_available_pages(self) -> nat;
 
     pub spec fn regions(self) -> Set<MemRegion>;
@@ -87,7 +82,7 @@ impl PageTableMemory {
         ensures
             res === self.cr3_spec(),
     {
-        MemRegionExec { base: self.cr3 as usize, size: PAGE_SIZE }
+        MemRegionExec { base: self.cr3, size: PAGE_SIZE }
     }
 
     pub open spec fn cr3_spec(&self) -> MemRegionExec;
@@ -114,7 +109,8 @@ impl PageTableMemory {
             self.phys_mem_ref_as_usize_spec() == old(self).phys_mem_ref_as_usize_spec(),
             self.inv(),
     {
-        unimplemented!()
+        let base = (self.page_allocator.alloc)();
+        MemRegionExec { base, size: 4096 }
     }
 
     /// Deallocates a page
@@ -123,6 +119,8 @@ impl PageTableMemory {
         requires
             old(self).inv(),
             old(self).regions().contains(r@),
+            aligned(r@.base, PAGE_SIZE as nat),
+            r@.size == PAGE_SIZE,
         ensures
             self.regions() === old(self).regions().remove(r@),
             forall|r2: MemRegion|
@@ -131,7 +129,7 @@ impl PageTableMemory {
             self.phys_mem_ref_as_usize_spec() == old(self).phys_mem_ref_as_usize_spec(),
             self.inv(),
     {
-        unimplemented!()
+        (self.page_allocator.dealloc)(r.base);
     }
 
     #[verifier(external_body)]
