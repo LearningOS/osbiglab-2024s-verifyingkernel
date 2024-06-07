@@ -3,6 +3,5 @@
 tmp=$(mktemp --tmpdir verusfmt.XXX.rs)
 cat > "$tmp"
 verusfmt --verus-only "$tmp"
-"$(rustup which rustfmt)" "$tmp"
-cat "$tmp"
+"$(rustup which rustfmt)" < "$tmp"
 rm "$tmp"
