@@ -97,6 +97,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                 flag_RW: l0_RW,
                 flag_US: l0_US,
                 flag_XD: l0_XD,
+                flag_PCD: l0_PCD,
                 ..
             } => {
                 assert(interp_l0_entry.is_Directory());
@@ -130,6 +131,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                         flag_RW: l1_RW,
                         flag_US: l1_US,
                         flag_XD: l1_XD,
+                        flag_PCD: l1_PCD,
                         ..
                     } => {
                         assert(aligned(addr as nat, L1_ENTRY_SIZE as nat));
@@ -139,6 +141,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                                 is_writable: l0_RW && l1_RW,
                                 is_supervisor: !l0_US || !l1_US,
                                 disable_execute: l0_XD || l1_XD,
+                                disable_cache: l0_PCD || l1_PCD,
                             },
                         });
                         assert(addr == ((l0_idx_u64 << 39u64) | (l1_idx_u64 << 30u64)))
@@ -170,6 +173,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                         flag_RW: l1_RW,
                         flag_US: l1_US,
                         flag_XD: l1_XD,
+                        flag_PCD: l1_PCD,
                         ..
                     } => {
                         assert(interp_l1_entry.is_Directory());
@@ -212,6 +216,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                                 flag_RW: l2_RW,
                                 flag_US: l2_US,
                                 flag_XD: l2_XD,
+                                flag_PCD: l2_PCD,
                                 ..
                             } => {
                                 assert(aligned(addr as nat, L2_ENTRY_SIZE as nat));
@@ -224,6 +229,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                                         is_writable: l0_RW && l1_RW && l2_RW,
                                         is_supervisor: !l0_US || !l1_US || !l2_US,
                                         disable_execute: l0_XD || l1_XD || l2_XD,
+                                        disable_cache: l0_PCD || l1_PCD || l2_PCD,
                                     },
                                 });
                                 assert(addr == ((l0_idx_u64 << 39u64) | (l1_idx_u64 << 30u64) | (
@@ -263,6 +269,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                                 flag_RW: l2_RW,
                                 flag_US: l2_US,
                                 flag_XD: l2_XD,
+                                flag_PCD: l2_PCD,
                                 ..
                             } => {
                                 assert(interp_l2_entry.is_Directory());
@@ -310,6 +317,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                                         flag_RW: l3_RW,
                                         flag_US: l3_US,
                                         flag_XD: l3_XD,
+                                        flag_PCD: l3_PCD,
                                         ..
                                     } => {
                                         assert(aligned(addr as nat, L3_ENTRY_SIZE as nat));
@@ -322,6 +330,7 @@ pub proof fn lemma_page_table_walk_interp_aux_1(mem: mem::PageTableMemory, pt: P
                                                 is_writable: l0_RW && l1_RW && l2_RW && l3_RW,
                                                 is_supervisor: !l0_US || !l1_US || !l2_US || !l3_US,
                                                 disable_execute: l0_XD || l1_XD || l2_XD || l3_XD,
+                                                disable_cache: l0_PCD || l1_PCD || l2_PCD || l3_PCD,
                                             },
                                         });
                                         assert(addr == ((l0_idx_u64 << 39u64) | (l1_idx_u64
@@ -468,6 +477,7 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                         flag_RW: l0_RW,
                         flag_US: l0_US,
                         flag_XD: l0_XD,
+                        flag_PCD: l0_PCD,
                         ..
                     } => {
                         assert(interp_l0_entry.is_Directory());
@@ -528,6 +538,7 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                 flag_RW: l1_RW,
                                 flag_US: l1_US,
                                 flag_XD: l1_XD,
+                                flag_PCD: l1_PCD,
                                 ..
                             } => {
                                 assert_by_contradiction!(!aligned(addr as nat, L1_ENTRY_SIZE as nat), {
@@ -536,7 +547,8 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                         flags: Flags {
                                             is_writable:      l0_RW &&  l1_RW,
                                             is_supervisor:   !l0_US || !l1_US,
-                                            disable_execute:  l0_XD ||  l1_XD
+                                            disable_execute:  l0_XD ||  l1_XD,
+                                            disable_cache:   l0_PCD || l1_PCD,
                                         }
                                     };
                                     assert(valid_pt_walk(mem, addr as u64, pte));
@@ -553,6 +565,7 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                 flag_RW: l1_RW,
                                 flag_US: l1_US,
                                 flag_XD: l1_XD,
+                                flag_PCD: l1_PCD,
                                 ..
                             } => {
                                 assert(interp_l1_entry.is_Directory());
@@ -627,6 +640,7 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                         flag_RW: l2_RW,
                                         flag_US: l2_US,
                                         flag_XD: l2_XD,
+                                        flag_PCD: l2_PCD,
                                         ..
                                     } => {
                                         assert_by_contradiction!(!aligned(addr as nat, L2_ENTRY_SIZE as nat), {
@@ -635,7 +649,8 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                                 flags: Flags {
                                                     is_writable:      l0_RW &&  l1_RW &&  l2_RW,
                                                     is_supervisor:   !l0_US || !l1_US || !l2_US,
-                                                    disable_execute:  l0_XD ||  l1_XD ||  l2_XD
+                                                    disable_execute:  l0_XD ||  l1_XD ||  l2_XD,
+                                                    disable_cache:   l0_PCD || l1_PCD || l2_PCD,
                                                 }
                                             };
                                             assert(valid_pt_walk(mem, addr as u64, pte));
@@ -662,6 +677,7 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                         flag_RW: l2_RW,
                                         flag_US: l2_US,
                                         flag_XD: l2_XD,
+                                        flag_PCD: l2_PCD,
                                         ..
                                     } => {
                                         assert(interp_l2_entry.is_Directory());
@@ -749,6 +765,7 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                                 flag_RW: l3_RW,
                                                 flag_US: l3_US,
                                                 flag_XD: l3_XD,
+                                                flag_PCD: l3_PCD,
                                                 ..
                                             } => {
                                                 assert_by_contradiction!(!aligned(addr as nat, L3_ENTRY_SIZE as nat), {
@@ -757,7 +774,8 @@ pub proof fn lemma_page_table_walk_interp_aux_2(mem: mem::PageTableMemory, pt: P
                                                         flags: Flags {
                                                             is_writable:      l0_RW &&  l1_RW &&  l2_RW &&  l3_RW,
                                                             is_supervisor:   !l0_US || !l1_US || !l2_US || !l3_US,
-                                                            disable_execute:  l0_XD ||  l1_XD ||  l2_XD ||  l3_XD
+                                                            disable_execute:  l0_XD ||  l1_XD ||  l2_XD ||  l3_XD,
+                                                            disable_cache:   l0_PCD || l1_PCD || l2_PCD || l3_PCD,
                                                         }
                                                     };
                                                     assert(valid_pt_walk(mem, addr as u64, pte));

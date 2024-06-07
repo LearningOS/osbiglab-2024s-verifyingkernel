@@ -39,6 +39,7 @@ pub spec const permissive_flags: Flags = Flags {
     is_writable: true,
     is_supervisor: false,
     disable_execute: false,
+    disable_cache: false,
 };
 
 // Sometimes z3 needs these concrete bounds to prove the no-overflow VC

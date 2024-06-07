@@ -518,7 +518,8 @@ impl PageDirectoryEntry {
             (r.entry & MASK_FLAG_US == MASK_FLAG_US) == !pte.flags.is_supervisor,
             r@.get_Page_flag_US() == !pte.flags.is_supervisor,
             r.entry & MASK_FLAG_PWT != MASK_FLAG_PWT,
-            r.entry & MASK_FLAG_PCD != MASK_FLAG_PCD,
+            (r.entry & MASK_FLAG_PCD == MASK_FLAG_PCD) == pte.flags.disable_cache,
+            r@.get_Page_flag_PCD() == pte.flags.disable_cache,
             (r.entry & MASK_FLAG_XD == MASK_FLAG_XD) == pte.flags.disable_execute,
             r@.get_Page_flag_XD() == pte.flags.disable_execute,
     {
@@ -529,7 +530,7 @@ impl PageDirectoryEntry {
             pte.flags.is_writable,
             pte.flags.is_supervisor,
             false,
-            false,
+            pte.flags.disable_cache,
             pte.flags.disable_execute,
         )
     }
@@ -547,6 +548,7 @@ impl PageDirectoryEntry {
             r@.get_Directory_flag_RW(),
             r@.get_Directory_flag_US(),
             !r@.get_Directory_flag_XD(),
+            !r@.get_Directory_flag_PCD(),
     {
         Self::new_entry(
             layer,
@@ -664,11 +666,13 @@ impl PageDirectoryEntry {
             res.is_writable <==> self.entry & MASK_FLAG_RW == MASK_FLAG_RW,
             res.is_supervisor <==> self.entry & MASK_FLAG_US != MASK_FLAG_US,
             res.disable_execute <==> self.entry & MASK_FLAG_XD == MASK_FLAG_XD,
+            res.disable_cache <==> self.entry & MASK_FLAG_PCD == MASK_FLAG_PCD,
     {
         Flags {
             is_writable: self.entry & MASK_FLAG_RW == MASK_FLAG_RW,
             is_supervisor: self.entry & MASK_FLAG_US != MASK_FLAG_US,
             disable_execute: self.entry & MASK_FLAG_XD == MASK_FLAG_XD,
+            disable_cache: self.entry & MASK_FLAG_PCD == MASK_FLAG_PCD,
         }
     }
 
@@ -908,6 +912,7 @@ pub mod PT {
                 let entry = #[trigger] view_at(mem, pt, layer, ptr, i);
                 entry.is_Directory() ==> entry.get_Directory_flag_RW()
                     && entry.get_Directory_flag_US() && !entry.get_Directory_flag_XD()
+                    && !entry.get_Directory_flag_PCD()
             }
     }
 
@@ -1033,6 +1038,7 @@ pub mod PT {
                 flag_RW,
                 flag_US,
                 flag_XD,
+                flag_PCD,
                 ..
             } => l1::NodeEntry::Page(
                 PageTableEntry {
@@ -1041,6 +1047,7 @@ pub mod PT {
                         is_writable: flag_RW,
                         is_supervisor: !flag_US,
                         disable_execute: flag_XD,
+                        disable_cache: flag_PCD,
                     },
                 },
             ),

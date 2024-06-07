@@ -210,6 +210,7 @@ pub struct Flags {
     pub is_writable: bool,
     pub is_supervisor: bool,
     pub disable_execute: bool,
+    pub disable_cache: bool,
 }
 
 pub struct PageTableEntry {

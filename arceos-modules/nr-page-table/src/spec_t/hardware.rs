@@ -1,9 +1,7 @@
 // #![verus::trusted]
-
 // trusted:
 // this defines the page table structure as interpreted by the hardware
 // and the hardware state machine
-
 use crate::definitions_t::*;
 use crate::spec_t::mem::{self, *};
 use vstd::prelude::*;
@@ -420,6 +418,7 @@ pub open spec fn valid_pt_walk(
             flag_RW: l0_RW,
             flag_US: l0_US,
             flag_XD: l0_XD,
+            flag_PCD: l0_PCD,
             ..
         } => {
             match read_entry(pt_mem, dir_addr as nat, 1, l1_idx) {
@@ -428,6 +427,7 @@ pub open spec fn valid_pt_walk(
                     flag_RW: l1_RW,
                     flag_US: l1_US,
                     flag_XD: l1_XD,
+                    flag_PCD: l1_PCD,
                     ..
                 } => {
                     aligned(addr as nat, L1_ENTRY_SIZE as nat) && pte == PageTableEntry {
@@ -436,6 +436,7 @@ pub open spec fn valid_pt_walk(
                             is_writable: l0_RW && l1_RW,
                             is_supervisor: !l0_US || !l1_US,
                             disable_execute: l0_XD || l1_XD,
+                            disable_cache: l0_PCD || l1_PCD,
                         },
                     }
                 },
@@ -444,6 +445,7 @@ pub open spec fn valid_pt_walk(
                     flag_RW: l1_RW,
                     flag_US: l1_US,
                     flag_XD: l1_XD,
+                    flag_PCD: l1_PCD,
                     ..
                 } => {
                     match read_entry(pt_mem, dir_addr as nat, 2, l2_idx) {
@@ -452,6 +454,7 @@ pub open spec fn valid_pt_walk(
                             flag_RW: l2_RW,
                             flag_US: l2_US,
                             flag_XD: l2_XD,
+                            flag_PCD: l2_PCD,
                             ..
                         } => {
                             aligned(addr as nat, L2_ENTRY_SIZE as nat) && pte == PageTableEntry {
@@ -463,6 +466,7 @@ pub open spec fn valid_pt_walk(
                                     is_writable: l0_RW && l1_RW && l2_RW,
                                     is_supervisor: !l0_US || !l1_US || !l2_US,
                                     disable_execute: l0_XD || l1_XD || l2_XD,
+                                    disable_cache: l0_PCD || l1_PCD || l2_PCD,
                                 },
                             }
                         },
@@ -471,6 +475,7 @@ pub open spec fn valid_pt_walk(
                             flag_RW: l2_RW,
                             flag_US: l2_US,
                             flag_XD: l2_XD,
+                            flag_PCD: l2_PCD,
                             ..
                         } => {
                             match read_entry(pt_mem, dir_addr as nat, 3, l3_idx) {
@@ -479,6 +484,7 @@ pub open spec fn valid_pt_walk(
                                     flag_RW: l3_RW,
                                     flag_US: l3_US,
                                     flag_XD: l3_XD,
+                                    flag_PCD: l3_PCD,
                                     ..
                                 } => {
                                     aligned(addr as nat, L3_ENTRY_SIZE as nat) && pte
@@ -491,6 +497,7 @@ pub open spec fn valid_pt_walk(
                                             is_writable: l0_RW && l1_RW && l2_RW && l3_RW,
                                             is_supervisor: !l0_US || !l1_US || !l2_US || !l3_US,
                                             disable_execute: l0_XD || l1_XD || l2_XD || l3_XD,
+                                            disable_cache: l0_PCD || l1_PCD || l2_PCD || l3_PCD,
                                         },
                                     }
                                 },
