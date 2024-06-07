@@ -206,6 +206,7 @@ impl MemRegionExec {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Flags {
     pub is_writable: bool,
     pub is_supervisor: bool,
