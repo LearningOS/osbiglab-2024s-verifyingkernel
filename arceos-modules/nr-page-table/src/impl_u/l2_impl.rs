@@ -1528,6 +1528,8 @@ pub mod PT {
         &&& pte.frame.base <= MAX_PHYADDR
     }
 
+    #[verifier::spinoff_prover]
+    #[verifier::rlimit(20)]
     fn map_frame_aux(
         mem: &mut mem::PageTableMemory,
         Ghost(pt): Ghost<PTDir>,
