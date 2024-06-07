@@ -27,7 +27,7 @@ pub enum HWStep {
 
 // FIXME: Including is_variant conditionally to avoid the warning when not building impl. But this
 // should disappear completely when I find the time to migrate to the new syntax.
-#[cfg_attr(feature = "impl", is_variant)]
+#[is_variant]
 #[allow(non_snake_case)]
 pub ghost enum GhostPageDirectoryEntry {
     Directory {
