@@ -1,1 +1,1 @@
-Codes are borrowed from [Verified Page Table for NrOS](https://github.com/utaal/verified-nrkernel).
+Codes are borrowed from [Verified Page Table for NrOS](https://github.com/utaal/verified-nrkernel) and [Verified Paging for x86-64 in Rust](https://github.com/matthias-brun/verified-paging-for-x86-64-in-rust).
