@@ -45,12 +45,12 @@ impl NrPageTable {
             flags,
         };
         let mut pt = Ghost::assume_new();
-        PT::map_frame(&mut self.mem, &mut pt, vaddr, pte)
+        PT::map_frame(&mut self.mem, &mut pt, vaddr % (1 << 48), pte)
     }
 
     pub fn unmap(&mut self, vaddr: usize) -> Result<(), ()> {
         let mut pt = Ghost::assume_new();
-        PT::unmap(&mut self.mem, &mut pt, vaddr)
+        PT::unmap(&mut self.mem, &mut pt, vaddr % (1 << 48))
     }
 }
 
