@@ -43,16 +43,16 @@ pub struct PageAllocator {
 #[verifier(external_body)]
 pub struct PageTableMemory {
     /// `phys_mem_ref` is the starting address of the physical memory linear mapping
-    phys_mem_ref: *mut u64,
+    phys_virt_offset: usize,
     cr3: usize,
     page_allocator: PageAllocator,
 }
 
 impl PageTableMemory {
     #[verifier::external_body]
-    pub fn new(page_allocator: PageAllocator) -> Self {
+    pub fn new(phys_virt_offset: usize, page_allocator: PageAllocator) -> Self {
         let cr3 = (page_allocator.alloc)();
-        Self { phys_mem_ref: 0 as _, cr3, page_allocator }
+        Self { phys_virt_offset, cr3, page_allocator }
     }
 
     pub spec fn alloc_available_pages(self) -> nat;
@@ -62,7 +62,6 @@ impl PageTableMemory {
     pub spec fn region_view(self, r: MemRegion) -> Seq<u64>;
 
     pub open spec fn inv(self) -> bool {
-        &&& self.phys_mem_ref_as_usize_spec() <= 0x7FE0_0000_0000_0000
         &&& forall|s1: MemRegion, s2: MemRegion|
             self.regions().contains(s1) && self.regions().contains(s2) && s1 !== s2 ==> !overlap(
                 s1,
@@ -106,7 +105,6 @@ impl PageTableMemory {
             forall|r2: MemRegion|
                 r2 !== r@ ==> #[trigger] self.region_view(r2) === old(self).region_view(r2),
             self.cr3_spec() == old(self).cr3_spec(),
-            self.phys_mem_ref_as_usize_spec() == old(self).phys_mem_ref_as_usize_spec(),
             self.inv(),
     {
         let base = (self.page_allocator.alloc)();
@@ -126,7 +124,6 @@ impl PageTableMemory {
             forall|r2: MemRegion|
                 r2 !== r@ ==> #[trigger] self.region_view(r2) === old(self).region_view(r2),
             self.cr3_spec() == old(self).cr3_spec(),
-            self.phys_mem_ref_as_usize_spec() == old(self).phys_mem_ref_as_usize_spec(),
             self.inv(),
     {
         (self.page_allocator.dealloc)(r.base);
@@ -147,12 +144,9 @@ impl PageTableMemory {
             self.regions() === old(self).regions(),
             self.alloc_available_pages() == old(self).alloc_available_pages(),
             self.cr3_spec() == old(self).cr3_spec(),
-            self.phys_mem_ref_as_usize_spec() == old(self).phys_mem_ref_as_usize_spec(),
     {
-        let word_offset: isize = (word_index(pbase) + idx) as isize;
-        unsafe {
-            self.phys_mem_ref.offset(word_offset).write(value);
-        }
+        let p = (self.phys_virt_offset + pbase + idx * 8) as *mut u64;
+        unsafe { p.write_volatile(value) };
     }
 
     #[verifier(external_body)]
@@ -166,75 +160,12 @@ impl PageTableMemory {
         ensures
             res == self.spec_read(idx as nat, region@),
     {
-        let word_offset: isize = (word_index(pbase) + idx) as isize;
-        unsafe { self.phys_mem_ref.offset(word_offset).read() }
+        let p = (self.phys_virt_offset + pbase + idx * 8) as *mut u64;
+        unsafe { p.read_volatile() }
     }
 
     pub open spec fn spec_read(self, idx: nat, region: MemRegion) -> (res: u64) {
         self.region_view(region)[idx as int]
-    }
-
-    /// This function manually does the address computation which `read` and `write` rely on not
-    /// overflowing. Since this function is not `external_body`, Verus checks that there's no
-    /// overflow. The preconditions are those of `read`, which are a subset of the `write`
-    /// preconditions.
-    /// (This is an exec function so it generates the normal overflow VCs.)
-    #[verus::line_count::ignore]
-    #[allow(dead_code)]
-    fn check_overflow(&self, pbase: usize, idx: usize, region: Ghost<MemRegion>)
-        requires
-            pbase <= MAX_PHYADDR,
-            self.phys_mem_ref_as_usize_spec() <= 0x7FE0_0000_0000_0000,
-            pbase == region@.base,
-            aligned(pbase as nat, WORD_SIZE as nat),
-            self.regions().contains(region@),
-            idx < 512,
-    {
-        proof {
-            crate::definitions_u::lemma_maxphyaddr_facts();
-        }
-        // https://dev-doc.rust-lang.org/beta/std/primitive.pointer.html#method.offset
-        // The raw pointer offset computation needs to fit in an isize.
-        // isize::MAX is   0x7FFF_FFFF_FFFF_FFFF
-        //
-        // `pbase` is a physical address, so we know it's <= MAX_PHYADDR (2^52-1).
-        // The no-overflow assertions below require phys_mem_ref <= 0x7FEFFFFFFFFFF009.
-        // In the invariant we require the (arbitrarily chosen) nicer number
-        // 0x7FE0_0000_0000_0000 as an upper bound for phys_mem_ref.
-        // (In practice the address has to be smaller anyway, because the address space
-        // isn't that large.) NrOS uses 0x4000_0000_0000.
-        assert(word_index_spec(pbase as nat) < 0x2_0000_0000_0000) by (nonlinear_arith)
-            requires
-                aligned(pbase as nat, WORD_SIZE as nat),
-                pbase <= MAX_PHYADDR,
-                MAX_PHYADDR <= 0xFFFFFFFFFFFFF,
-        ;
-        let word_offset: isize = (word_index(pbase) + idx) as isize;
-        assert(word_offset < 0x2_0000_0000_01FF) by (nonlinear_arith)
-            requires
-                idx < 512,
-                word_offset == word_index_spec(pbase as nat) + idx,
-                word_index_spec(pbase as nat) < 0x2_0000_0000_0000,
-        ;
-        let phys_mem_ref: isize = self.phys_mem_ref_as_usize() as isize;
-        assert(word_offset * WORD_SIZE < 0x10_0000_0000_0FF8) by (nonlinear_arith)
-            requires
-                word_offset < 0x2_0000_0000_01FF,
-        ;
-        let byte_offset: isize = word_offset * (WORD_SIZE as isize);
-        let raw_ptr_offset = phys_mem_ref + word_offset * (WORD_SIZE as isize);
-    }
-
-    #[verifier(external_body)]
-    pub spec fn phys_mem_ref_as_usize_spec(&self) -> usize;
-
-    #[verifier(external_body)]
-    #[allow(dead_code)]
-    fn phys_mem_ref_as_usize(&self) -> (res: usize)
-        ensures
-            res == self.phys_mem_ref_as_usize_spec(),
-    {
-        self.phys_mem_ref as usize
     }
 }
 

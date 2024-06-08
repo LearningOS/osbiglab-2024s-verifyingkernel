@@ -24,10 +24,11 @@ pub struct NrPageTable {
 
 impl NrPageTable {
     pub fn new(
+        phys_virt_offset: usize,
         alloc: Box<dyn Send + Sync + Fn() -> usize>,
         dealloc: Box<dyn Send + Sync + Fn(usize)>,
     ) -> Self {
-        let mem = PageTableMemory::new(PageAllocator { alloc, dealloc });
+        let mem = PageTableMemory::new(phys_virt_offset, PageAllocator { alloc, dealloc });
         Self { mem }
     }
 
