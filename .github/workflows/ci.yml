@@ -1,0 +1,55 @@
+on:
+  push:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Verus
+        run: |
+          cd verus/verus/source
+          tools/get-z3.sh
+          source ../tools/activate
+          vargo build --release --vstd-no-std
+          echo "$GITHUB_WORKSPACE/verus/env" >> "$GITHUB_PATH"
+      - name: Verify exercises
+        run: verus verus-exercises/src/main.rs
+      - name: Verify bump allocator
+        run: |
+          cd verified-global-alloc
+          make verify
+          make
+          ./main || echo $?
+      - name: Verify bitmap allocator
+        run: verus --crate-type lib arceos-modules/verified-allocator/src/lib.rs
+      - name: Verify memory_addr
+        run: verus --crate-type lib arceos-modules/verified-memory-addr/src/lib.rs
+      - name: Verify nr page table
+        run: verus --crate-type lib arceos-modules/nr-page-table/src/lib.rs
+  arceos:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: ["A=apps/memtest", "A=apps/net/httpclient NET=y"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Get dependencies
+        run: |
+          cd arceos-modules/arceos
+          cargo install cargo-binutils
+          sudo apt-get update
+          sudo apt-get install qemu-system-x86
+      - name: Build ArceOS
+        run: |
+          cd arceos-modules/arceos
+          make ${{ matrix.app }}
+      - name: Run ArceOS
+        run: |
+          cd arceos-modules/arceos
+          sudo chmod 666 /dev/kvm
+          make justrun ${{ matrix.app }}
