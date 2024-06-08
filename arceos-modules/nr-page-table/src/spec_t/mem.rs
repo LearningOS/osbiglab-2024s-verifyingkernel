@@ -108,7 +108,8 @@ impl PageTableMemory {
             self.inv(),
     {
         let base = (self.page_allocator.alloc)();
-        MemRegionExec { base, size: 4096 }
+        unsafe { ((self.phys_virt_offset + base) as *mut u8).write_bytes(0, PAGE_SIZE) }
+        MemRegionExec { base, size: PAGE_SIZE }
     }
 
     /// Deallocates a page
