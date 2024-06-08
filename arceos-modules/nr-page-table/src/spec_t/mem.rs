@@ -34,8 +34,8 @@ pub open spec fn word_index_spec(addr: nat) -> nat
 
 #[verifier(external_body)]
 pub struct PageAllocator {
-    pub alloc: Box<dyn Fn() -> usize>,
-    pub dealloc: Box<dyn Fn(usize)>,
+    pub alloc: Box<dyn Send + Sync + Fn() -> usize>,
+    pub dealloc: Box<dyn Send + Sync + Fn(usize)>,
 }
 
 // FIXME: We need to allow the dirty and accessed bits to change in the memory.

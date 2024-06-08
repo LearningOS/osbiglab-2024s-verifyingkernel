@@ -23,7 +23,10 @@ pub struct NrPageTable {
 }
 
 impl NrPageTable {
-    pub fn new(alloc: Box<dyn Fn() -> usize>, dealloc: Box<dyn Fn(usize)>) -> Self {
+    pub fn new(
+        alloc: Box<dyn Send + Sync + Fn() -> usize>,
+        dealloc: Box<dyn Send + Sync + Fn(usize)>,
+    ) -> Self {
         let mem = PageTableMemory::new(PageAllocator { alloc, dealloc });
         Self { mem }
     }
