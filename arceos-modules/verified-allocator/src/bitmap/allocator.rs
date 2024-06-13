@@ -90,6 +90,12 @@ impl BitmapAllocator {
         unimplemented!()
     }
 
+    pub closed spec fn is_add_memory(self, old_self: Self, start: usize, size: usize) -> bool
+    {
+        &&& self.block_map@.dom() =~= old_self.block_map@.dom().insert(start)
+        &&& self.block_map@[start].size() == (size / size_of::<usize>() - 2) / 9
+    }
+
     /// Add a memory region [start, start + size) to the allocator.
     ///
     /// This is the safe version that requires a *pt* argument corresponding to the memory region.
@@ -107,7 +113,7 @@ impl BitmapAllocator {
         ensures
             self.wf(),
             match r {
-                Ok(()) => true,
+                Ok(()) => self.is_add_memory(*old(self), start, size),
                 Err(AllocError::MemoryOverlap) => true,
                 Err(AllocError::InvalidParam | AllocError::NoMemory) => false,
             },
@@ -186,7 +192,7 @@ impl BitmapAllocator {
         ensures
             self.wf(),
             match r {
-                Ok(()) => true,
+                Ok(()) => self.is_add_memory(*old(self), start, size),
                 Err(AllocError::InvalidParam | AllocError::MemoryOverlap) => true,
                 Err(AllocError::NoMemory) => false,
             },
