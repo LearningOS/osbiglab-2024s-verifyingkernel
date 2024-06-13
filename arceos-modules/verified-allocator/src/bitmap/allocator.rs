@@ -57,6 +57,7 @@ impl BitmapAllocator {
         }
     }
 
+    /// Create a new allocator with no memory region.
     pub const fn new() -> (r: Self)
         ensures
             r.wf(),
@@ -89,6 +90,11 @@ impl BitmapAllocator {
         unimplemented!()
     }
 
+    /// Add a memory region [start, start + size) to the allocator.
+    ///
+    /// This is the safe version that requires a *pt* argument corresponding to the memory region.
+    /// The *pt* token ensures that the caller owns this memory region and transfers the ownership
+    /// to the allocator.
     pub fn add_memory(&mut self, start: usize, size: usize, pt: Tracked<PointsToRaw>) -> (r:
         AllocResult)
         requires
@@ -168,6 +174,12 @@ impl BitmapAllocator {
         Ok(())
     }
 
+    /// Add a memory region [start, start + size) to the allocator.
+    ///
+    /// # Safety
+    ///
+    /// This is the unsafe version that can be used outside of Verus.
+    /// The caller is responsible to ensure the memory region is safe to use.
     pub fn unsafe_add_memory(&mut self, start: usize, size: usize) -> (r: AllocResult)
         requires
             old(self).wf(),
@@ -187,6 +199,11 @@ impl BitmapAllocator {
         self.add_memory(start, size, pt)
     }
 
+    /// Allocate a memory region with the given size and alignment.
+    ///
+    /// `Tracked<PointsToRaw>` in the return value can be used in Verus to prove the ownership of
+    /// the allocated memory region, and should be used later in `dealloc`. It can be ignored if
+    /// not using Verus.
     pub fn alloc(&mut self, size: usize, align: usize) -> (r: AllocResult<
         (usize, Tracked<PointsToRaw>),
     >)
@@ -305,6 +322,11 @@ impl BitmapAllocator {
         Err(AllocError::NoMemory)
     }
 
+    /// Deallocate the memory region with the given address and size.
+    ///
+    /// This is the safe version that requires a *pt* argument corresponding to the memory region.
+    /// The *pt* token ensures that the caller owns this memory region and transfers the ownership
+    /// back to the allocator.
     pub fn dealloc(&mut self, addr: usize, size: usize, Tracked(pt): Tracked<PointsToRaw>)
         requires
             old(self).wf(),
@@ -357,6 +379,12 @@ impl BitmapAllocator {
         }
     }
 
+    /// Deallocate the memory region with the given address and size.
+    ///
+    /// # Safety
+    ///
+    /// This is the unsafe version that can be used outside of Verus.
+    /// The caller is responsible to ensure the memory region is safe to use.
     pub fn unsafe_dealloc(&mut self, addr: usize, size: usize)
         requires
             old(self).wf(),
@@ -370,14 +398,17 @@ impl BitmapAllocator {
         self.dealloc(addr, size, pt)
     }
 
+    /// Total number of bytes managed by the allocator
     pub fn total_bytes(&self) -> usize {
         self.total_bytes
     }
 
+    /// Number of available bytes for allocation
     pub fn available_bytes(&self) -> usize {
         self.available_bytes
     }
 
+    /// Number of used bytes
     pub fn used_bytes(&self) -> usize
         requires
             self.wf(),
