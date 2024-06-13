@@ -114,7 +114,7 @@ impl BitmapAllocator {
             self.wf(),
             match r {
                 Ok(()) => self.is_add_memory(*old(self), start, size),
-                Err(AllocError::MemoryOverlap) => true,
+                Err(AllocError::MemoryOverlap) => *self == *old(self),
                 Err(AllocError::InvalidParam | AllocError::NoMemory) => false,
             },
     {
@@ -129,6 +129,7 @@ impl BitmapAllocator {
                     0 <= i < self.len(),
                     p == self.block_seq@[i],
                     forall|j| 0 <= j < i ==> start != self.block_seq@[j],
+                    *self == *old(self),
                     self.wf(),
                     size >= 1,
                     start + size <= usize::MAX,
@@ -193,7 +194,7 @@ impl BitmapAllocator {
             self.wf(),
             match r {
                 Ok(()) => self.is_add_memory(*old(self), start, size),
-                Err(AllocError::InvalidParam | AllocError::MemoryOverlap) => true,
+                Err(AllocError::InvalidParam | AllocError::MemoryOverlap) => *self == *old(self),
                 Err(AllocError::NoMemory) => false,
             },
     {
