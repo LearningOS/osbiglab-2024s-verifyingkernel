@@ -12,10 +12,21 @@
 lsp.rust_analyzer.setup {
   ...
   on_init = function(client)
-    local path = client.workspace_folders[1].name
+    local path = os.getenv('PATH')
 
-    if string.find(path, 'verifyingkernel') then
-      client.config.settings['rust-analyzer'].checkOnSave.overrideCommand = { 'verus' }
+    if path and path:find('verus/env') then
+      client.config.settings['rust-analyzer'].checkOnSave.overrideCommand = {
+        'verus',
+        '--expand-errors',
+        '--crate-type',
+        'lib',
+      }
+      client.config.settings['rust-analyzer'].diagnostics = {
+        disabled = {
+          'syntax-error',
+          'break-outside-of-loop',
+        },
+      }
       client.notify('workspace/didChangeConfiguration', { settings = client.config.settings })
     end
 
