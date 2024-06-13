@@ -50,7 +50,6 @@ impl BitmapBlock {
         &&& self.size_pt@.value.is_some()
         &&& self.next_pt@.pptr == addr + size_of::<usize>()
         &&& self.next_pt@.value.is_some()
-        &&& self.user_pt@.dom().subset_of(set_int_range(addr + 2 * size_of::<usize>(), masks_start))
         &&& self.mask_pt_map.dom() =~= set_int_range(0, self.size() as int)
         &&& forall|i: int|
             0 <= i < self.size() ==> #[trigger] self.mask_pt_map[i]@.pptr == masks_start + i
