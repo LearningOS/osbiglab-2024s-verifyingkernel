@@ -51,14 +51,14 @@ impl BitmapBlock {
         &&& self.next_pt@.pptr == addr + size_of::<usize>()
         &&& self.next_pt@.value.is_some()
         &&& self.mask_pt_map.dom() =~= set_int_range(0, self.size() as int)
-        &&& forall|i: int|
+        &&& forall|i|
             0 <= i < self.size() ==> #[trigger] self.mask_pt_map[i]@.pptr == masks_start + i
                 * size_of::<usize>()
-        &&& forall|i: int| 0 <= i < self.size() ==> #[trigger] self.mask_pt_map[i]@.value.is_some()
+        &&& forall|i| 0 <= i < self.size() ==> #[trigger] self.mask_pt_map[i]@.value.is_some()
     }
 
     spec fn masks_consistent_with_pt(&self, addr: usize) -> bool {
-        forall|i: int|
+        forall|i|
             0 <= i < usize::BITS * self.size() ==> (#[trigger] self.spec_is_free(i)
                 <==> self.user_pt@.dom().contains(addr + 2 * size_of::<usize>() + i))
     }
@@ -98,12 +98,12 @@ impl BitmapBlock {
             block.size() == old(block).size(),
     {
         PPtr::from_usize(addr + size_of::<usize>()).write(Tracked(&mut block.next_pt), next);
-        assert(forall|i: int|
+        assert(forall|i|
             0 <= i < block.size() * usize::BITS ==> old(block).spec_is_free(i)
                 == block.spec_is_free(i));
     }
 
-    spec fn spec_is_free(&self, index: int) -> bool
+    pub closed spec fn spec_is_free(&self, index: int) -> bool
         recommends
             0 <= index < usize::BITS * self.size(),
     {
@@ -146,7 +146,7 @@ impl BitmapBlock {
                 &&& block.size_pt =~= old(block).size_pt
                 &&& block.next_pt =~= old(block).next_pt
                 &&& !block.spec_is_free(index as int)
-                &&& forall|i: int|
+                &&& forall|i|
                     0 <= i < usize::BITS * block.size() && i != index ==> (
                     #[trigger] block.spec_is_free(i) <==> old(block).spec_is_free(i))
                 &&& pt@.is_range(alloc_addr, 1)
@@ -161,7 +161,7 @@ impl BitmapBlock {
         let pt = Tracked(
             block.user_pt.take(set![masks_start - usize::BITS * block.size() + index]),
         );
-        assert(forall|i: int|
+        assert(forall|i|
             0 <= i < usize::BITS * block.size() && i != index ==> (#[trigger] block.spec_is_free(i)
                 <==> old(block).spec_is_free(i)));
         pt
@@ -190,7 +190,7 @@ impl BitmapBlock {
                 &&& block.size_pt =~= old(block).size_pt
                 &&& block.next_pt =~= old(block).next_pt
                 &&& block.spec_is_free(index as int)
-                &&& forall|i: int|
+                &&& forall|i|
                     0 <= i < usize::BITS * block.size() && i != index ==> (
                     #[trigger] block.spec_is_free(i) <==> old(block).spec_is_free(i))
             }),
@@ -203,7 +203,7 @@ impl BitmapBlock {
         proof {
             block.mask_pt_map.tracked_insert(p as int, mask_pt);
             block.user_pt.insert(pt);
-            assert(forall|i: int|
+            assert(forall|i|
                 0 <= i < usize::BITS * block.size() && i != index ==> (
                 #[trigger] block.spec_is_free(i) <==> old(block).spec_is_free(i)));
         }
@@ -374,6 +374,10 @@ impl BitmapBlock {
             block.wf(block_addr),
             block.size() == old(block).size(),
             block.spec_next() == old(block).spec_next(),
+            ({
+                let p = dealloc_addr - block_addr - 2 * size_of::<usize>();
+                forall|i| p <= i < p + dealloc_size ==> block.spec_is_free(i)
+            }),
     {
         let user_start = block_addr + 2 * size_of::<usize>();
         let masks_start = user_start + usize::BITS as usize * Self::get_size(
@@ -390,10 +394,20 @@ impl BitmapBlock {
                 dealloc_pos + dealloc_size <= usize::BITS * block.size(),
                 block.wf(block_addr),
                 block.spec_next() == old(block).spec_next(),
+                forall|j| dealloc_pos <= j < i ==> block.spec_is_free(j),
         {
             let byte_pt = Tracked(pt.take(set![user_start+i]));
             Self::set_free(masks_start, Tracked(block), i, byte_pt);
         }
+    }
+
+    pub open spec fn disjoint_with(a1: usize, b1: Self, a2: usize, b2: Self) -> bool
+        recommends
+            b1.wf(a1),
+            b2.wf(a2),
+    {
+        a2 >= a1 + 2 * size_of::<usize>() + 9 * b1.size() * size_of::<usize>() || a1 >= a2 + 2
+            * size_of::<usize>() + 9 * b2.size() * size_of::<usize>()
     }
 }
 

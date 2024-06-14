@@ -26,8 +26,39 @@ impl BitmapAllocator {
         b == self.block_map@[a].spec_next()
     }
 
-    spec fn len(&self) -> nat {
+    pub closed spec fn len(&self) -> nat {
         self.block_seq@.len()
+    }
+
+    pub closed spec fn blocks_are_disjoint(&self, p: usize, q: usize) -> bool {
+        let x = self.block_map@[p];
+        let y = self.block_map@[q];
+        BitmapBlock::disjoint_with(p, x, q, y)
+    }
+
+    pub closed spec fn all_blocks_are_disjoint(&self) -> bool {
+        forall|p, q|
+            self.block_map@.dom().contains(p) && self.block_map@.dom().contains(q) && p != q
+                ==> self.blocks_are_disjoint(p, q)
+    }
+
+    proof fn lemma_block_disjoint_only_relies_on_blocks(self, old_self: Self)
+        requires
+            old_self.all_blocks_are_disjoint(),
+            self.block_map@.dom() =~= old_self.block_map@.dom(),
+            forall|p|
+                self.block_map@.dom().contains(p) ==> self.block_map@[p].size()
+                    == #[trigger] old_self.block_map@[p].size(),
+        ensures
+            self.all_blocks_are_disjoint(),
+    {
+        assert_by_contradiction!(
+            self.all_blocks_are_disjoint(), {
+                let (p, q) = choose|p, q| self.block_map@.dom().contains(p) &&
+                    self.block_map@.dom().contains(q) && p != q && !self.blocks_are_disjoint(p, q);
+                assert(!old_self.blocks_are_disjoint(p, q));
+            }
+        )
     }
 
     pub closed spec fn wf(&self) -> bool {
@@ -53,6 +84,7 @@ impl BitmapAllocator {
                     )
                 &&& forall|p|
                     self.block_map@.dom().contains(p) ==> #[trigger] self.block_map@[p].wf(p)
+                &&& self.all_blocks_are_disjoint()
             },
         }
     }
@@ -90,8 +122,7 @@ impl BitmapAllocator {
         unimplemented!()
     }
 
-    pub closed spec fn is_add_memory(self, old_self: Self, start: usize, size: usize) -> bool
-    {
+    pub closed spec fn is_add_memory(self, old_self: Self, start: usize, size: usize) -> bool {
         &&& self.block_map@.dom() =~= old_self.block_map@.dom().insert(start)
         &&& self.block_map@[start].size() == (size / size_of::<usize>() - 2) / 9
     }
@@ -129,6 +160,13 @@ impl BitmapAllocator {
                     0 <= i < self.len(),
                     p == self.block_seq@[i],
                     forall|j| 0 <= j < i ==> start != self.block_seq@[j],
+                    forall|j|
+                        0 <= j < i ==> {
+                            let p = #[trigger] self.block_seq@[j];
+                            let b = self.block_map@[p];
+                            start >= p + 2 * size_of::<usize>() + 9 * b.size() * size_of::<usize>()
+                                || p >= start + size
+                        },
                     *self == *old(self),
                     self.wf(),
                     size >= 1,
@@ -137,6 +175,13 @@ impl BitmapAllocator {
                 ensures
                     forall|j| 0 <= j < self.len() ==> start != self.block_seq@[j],
                     p == self.block_seq@.last(),
+                    forall|j|
+                        0 <= j < self.len() ==> {
+                            let p = #[trigger] self.block_seq@[j];
+                            let b = self.block_map@[p];
+                            start >= p + 2 * size_of::<usize>() + 9 * b.size() * size_of::<usize>()
+                                || p >= start + size
+                        },
             {
                 let tracked block = self.block_map.borrow().tracked_borrow(p);
                 assert(block.open_wf(p)) by { block.lemma_open_wf(p) };
@@ -153,31 +198,37 @@ impl BitmapAllocator {
                     }
                     break ;
                 }
-                proof {
-                    i = i + 1;
-                }
+                proof { i = i + 1 }
                 p = next;
             }
             let tracked block = self.block_map.borrow_mut().tracked_remove(p);
             BitmapBlock::set_next(p, Tracked(&mut block), start);
-            proof {
-                self.block_map.borrow_mut().tracked_insert(p, block);
-            }
+            proof { self.block_map.borrow_mut().tracked_insert(p, block) }
         }
         #[allow(unused_variables)]  // `block` is ghost code
         let block = BitmapBlock::new(start, size, self.current_block_addr, pt);
         self.current_block_addr = Some(start);
         self.current_pos = 0;
+        self.total_bytes = self.total_bytes + size;
+        self.available_bytes = self.available_bytes + size;
         proof {
             self.block_seq@ = self.block_seq@.insert(0, start);
             self.block_map.borrow_mut().tracked_insert(start, block.get());
+            assert(forall|i|
+                0 <= i < self.block_seq@.len() - 1 ==> old(self).block_seq@[i] == self.block_seq@[i
+                    + 1]);
+            assert(self.block_seq@.first() == start);
+            assert_by_contradiction!(
+                forall|p, q| self.block_map@.dom().contains(p) && self.block_map@.dom().contains(q)
+                    && p != start && q != start && p != q ==> self.blocks_are_disjoint(p, q),
+                {
+                    let (p, q) = choose|p, q| self.block_map@.dom().contains(p) &&
+                        self.block_map@.dom().contains(q) && p != start && q != start && p != q &&
+                        !self.blocks_are_disjoint(p, q);
+                    assert(!old(self).blocks_are_disjoint(p, q));
+                }
+            );
         }
-        #[verusfmt::skip]
-        assert(forall|i| 0 <= i < self.block_seq@.len() - 1 ==>
-            old(self).block_seq@[i] == self.block_seq@[i + 1]);
-        assert(self.block_seq@.first() == start);
-        self.total_bytes = self.total_bytes + size;
-        self.available_bytes = self.available_bytes + size;
         Ok(())
     }
 
@@ -239,9 +290,7 @@ impl BitmapAllocator {
         let mut p = current_block_addr;
         let tracked block = self.block_map.borrow_mut().tracked_remove(p);
         let result = BitmapBlock::alloc(p, Tracked(&mut block), size, align, self.current_pos);
-        proof {
-            self.block_map.borrow_mut().tracked_insert(p, block);
-        }
+        proof { self.block_map.borrow_mut().tracked_insert(p, block) }
         if let Some(result) = result {
             assert(block.open_wf(p)) by { block.lemma_open_wf(p) };
             self.current_pos = result.0 + size - p - 2 * size_of::<usize>();
@@ -250,6 +299,7 @@ impl BitmapAllocator {
             } else {
                 self.available_bytes = self.available_bytes - size;
             }
+            proof { self.lemma_block_disjoint_only_relies_on_blocks(*old(self)) }
             return Ok(result);
         }
         assert(self.block_map@ =~= old(self).block_map@);
@@ -319,6 +369,7 @@ impl BitmapAllocator {
                 } else {
                     self.available_bytes = self.available_bytes - size;
                 }
+                proof { self.lemma_block_disjoint_only_relies_on_blocks(*old(self)) }
                 return Ok(result);
             }
             assert(self.block_map@ == old(self).block_map@);
@@ -327,6 +378,25 @@ impl BitmapAllocator {
             }
         }
         Err(AllocError::NoMemory)
+    }
+
+    pub closed spec fn is_region_unmanaged_or_free_in_block(
+        &self,
+        addr: usize,
+        size: usize,
+        block_index: int,
+    ) -> bool
+        recommends
+            0 <= block_index < self.len(),
+    {
+        let p = #[trigger] self.block_seq@[block_index];
+        let start = addr - p - size_of::<usize>() * 2;
+        start >= 0 && start + size <= usize::BITS * self.block_map@[p].size() ==> forall|i|
+            start <= i < start + size ==> self.block_map@[p].spec_is_free(i)
+    }
+
+    pub closed spec fn is_region_unmanaged_or_free(&self, addr: usize, size: usize) -> bool {
+        forall|i| 0 <= i < self.len() ==> self.is_region_unmanaged_or_free_in_block(addr, size, i)
     }
 
     /// Deallocate the memory region with the given address and size.
@@ -342,6 +412,7 @@ impl BitmapAllocator {
             pt.is_range(addr as int, size as int),
         ensures
             self.wf(),
+            self.is_region_unmanaged_or_free(addr, size),
     {
         let current_block_addr = match self.current_block_addr {
             None => return ,
@@ -359,6 +430,7 @@ impl BitmapAllocator {
                 self.current_block_addr == Some(current_block_addr),
                 pt.is_range(addr as int, size as int),
                 end == addr + size,
+                forall|j| 0 <= j < i ==> self.is_region_unmanaged_or_free_in_block(addr, size, j),
         {
             let tracked block = self.block_map.borrow().tracked_borrow(p);
             assert(block.open_wf(p)) by { block.lemma_open_wf(p) };
@@ -366,23 +438,32 @@ impl BitmapAllocator {
                 + usize::BITS as usize * BitmapBlock::get_size(p, Tracked(&block)) {
                 let tracked block = self.block_map.borrow_mut().tracked_remove(p);
                 BitmapBlock::dealloc(p, Tracked(&mut block), addr, size, Tracked(pt));
-                proof {
-                    self.block_map.borrow_mut().tracked_insert(p, block);
-                }
                 if self.total_bytes - self.available_bytes < size {
                     self.available_bytes = self.total_bytes;
                 } else {
                     self.available_bytes = self.available_bytes + size;
                 }
+                proof {
+                    self.block_map.borrow_mut().tracked_insert(p, block);
+                    self.lemma_block_disjoint_only_relies_on_blocks(*old(self));
+                    assert_by_contradiction!(self.is_region_unmanaged_or_free(addr, size), {
+                            let j = choose|j| 0 <= j < self.len() &&
+                                !self.is_region_unmanaged_or_free_in_block(addr, size, j);
+                            assert(!self.blocks_are_disjoint(p, self.block_seq@[j]));
+                        });
+                }
                 return ;
             }
             p = BitmapBlock::next(p, Tracked(self.block_map.borrow_mut().tracked_borrow(p)));
             if p == current_block_addr {
+                proof {
+                    assert_by_contradiction!(i == self.len() - 1, {
+                        assert(p == self.block_seq@[i + 1]);
+                    });
+                }
                 return ;
             }
-            proof {
-                i = i + 1;
-            }
+            proof { i = i + 1 }
         }
     }
 
