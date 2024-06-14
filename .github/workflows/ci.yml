@@ -33,7 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: ["A=apps/memtest", "A=apps/net/httpclient NET=y"]
+        app:
+          - A=apps/memtest LOG=debug
+          - A=apps/net/httpclient NET=y LOG=debug
     steps:
       - uses: actions/checkout@v4
         with:
