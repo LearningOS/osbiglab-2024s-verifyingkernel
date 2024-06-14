@@ -90,7 +90,7 @@ pub const fn align_offset(addr: usize, align: usize) -> (r: usize)
         r == addr - align_down(addr, align),
 {
     assert(forall|a: u64, b: u64| a == add(a & b, a & !b)) by (bit_vector);
-    assume(forall|a: u64, b: u64| (a & b) + (a & !b) <= usize::MAX);  // TODO
+    assert(forall|a: u64, b: u64| a & b <= sub(u64::MAX, a & !b)) by (bit_vector);
     addr & (align - 1)
 }
 
