@@ -30,6 +30,8 @@ API 支持添加不连续的 memory region，所以设计上把每次添加进�
 
 在全局的 allocator 中，还记录了当前 block 以及当前 byte 的位置，相当于实现了 next fit，每次从上次搜索结束的位置开始往后搜索可用的空闲内存，以提升运行效率。
 
+![结构示意图](../../images/bitmap-allocator-structure.png)
+
 ## 实现细节
 
 代码分为三个 module：

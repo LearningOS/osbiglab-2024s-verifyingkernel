@@ -10,7 +10,7 @@
 
 下图（摘自论文）是该项目的总体结构，其中红色部分是未验证、受信任的，蓝色部分是验证了的。
 
-![verified paging overview](./images/verified-paging-overview.png)
+![verified paging overview](../images/verified-paging-overview.png)
 
 -   application specification: 抽象地描述了页表的行为，是证明的最终目标，定义了正确性的具体含义；同时，如果需要对上层应用进行验证，也可以使用这个 specification 来描述页表的行为。这部分 specification 是以 application 的视角定义的，包含 read、write、map、unmap、resolve (translate) 等操作，由于底层细节的缺失，对操作返回值等（比如返回什么错误类型）没有具体的规定，需要更低层的 specification 进行补充。
 -   hardware specification: 描述了硬件的相关行为，维护了 memory 和 TLB，状态转移包括修改 page table memory、读写 application memory、添加/删除 TLB entry。
